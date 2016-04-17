@@ -2,6 +2,12 @@
   "name": "cjs2amd",
   "version": "0.0.1",
   "description": "Simple CommonJS to AMD converter and bundler",
+  "keywords": [
+    "cjs",
+    "convert",
+    "amd",
+    "bundler"
+  ],
   "main": "./cjs2amd.js",
   "repository": "git://github.com/wlodzislav/cjs2amd.git",
   "author": "Vladislav Kaminsky <wlodzislav@ya.ru>",
