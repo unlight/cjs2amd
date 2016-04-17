@@ -96,7 +96,7 @@ Files content:
 
 module.exports = {
 	c: require("./b/c"),
-	f: require("d)
+	f: require("d")
 };
 ```
 
