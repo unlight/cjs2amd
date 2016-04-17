@@ -2,7 +2,7 @@
 
 Converts CommonJS modules:
 
-```
+```js
 module.exports = {
 	c: require("./b/c"),
 	f: require("d")
@@ -11,7 +11,7 @@ module.exports = {
 
 into AMD modules:
 
-```
+```js
 require(["b/c", "node_modules/d/f"], function(cModule, fModule) {
 	var module = {
 		exports: {}
@@ -91,7 +91,7 @@ node_modules/
 
 Files content:
 
-```
+```js
 // src/a.js
 
 module.exports = {
@@ -100,13 +100,13 @@ module.exports = {
 };
 ```
 
-```
+```js
 // src/b/c.js
 
 module.exports = "c";
 ```
 
-```
+```js
 // node_modules/d/f.js
 
 module.exports = "f";
@@ -143,7 +143,7 @@ cjs2amd --bundle --output lib/bundle.js --root src src/a.js
 
 Contents of `lib/bundle.js`:
 
-```
+```js
 (function () {
 	var modules = {};
 
@@ -207,7 +207,7 @@ Convert file or files(when .recursive == true) to AMD.
 
 Single file:
 
-```
+```js
 var result = cjs2amd.convert({
 	input: "./src/module.js",
 	name: "MyModule", // optional, by default "src/module"
@@ -220,7 +220,7 @@ var result = cjs2amd.convert({
 
 File and dependencies:
 
-```
+```js
 var result = cjs2amd.convert({
 	input: "./src/module.js",
 	root: "./", // optional, by default current working dir
