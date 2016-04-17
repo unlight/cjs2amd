@@ -8,7 +8,10 @@
     "amd",
     "bundler"
   ],
-  "main": "./cjs2amd.js",
+  "main": "index.js",
+  "bin": {
+    "cjs2amd": "bin/cjs2amd"
+  },
   "repository": "git://github.com/wlodzislav/cjs2amd.git",
   "author": "Vladislav Kaminsky <wlodzislav@ya.ru>",
   "license": "MIT",

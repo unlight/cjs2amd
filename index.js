@@ -353,50 +353,8 @@ function cmd(options) {
 	}
 }
 
-if (require.main === module) {
-	var commander = require("commander");
-
-	commander
-		.option("-d, --dependencies", "Print dependencies")
-		.option("-i, --input [path]", "Input file path")
-		.option("-o, --output [path]", "Output file path, dir if used with -R/--recursive")
-		.option("-r, --root [path]", "Root path in resolving, default to current working dir")
-		.option("-n, --name [name]", "Module name in define(), or global export variable")
-		.option("-R, --recursive [path]", "Convert file and all it's dependencies")
-		.option("-s, --stdout", "Output to STDOUT")
-		.option("-b, --bundle", "Bundle all dependencies into single file")
-		.option("--require", "Use require() fun in module declaration")
-		.option("-g, --global", "Export module.exports as global variable")
-		.option("--silent", "Don't log warnings and errors")
-		.parse(process.argv);
-
-	// HACK: commander already sets .name
-	if (typeof(commander.name) != "string") {
-		commander.name = undefined;
-	}
-
-	commander.input = commander.input || commander.args[0];
-
-	if (commander.silent === undefined) {
-		commander.silent = false;
-	}
-
-	try {
-		cmd(commander);
-	} catch (err) {
-		if (!commander.silent) {
-			if (typeof(err) == "string") {
-				console.error(err.toString().replace(/^.*:/, ansicolors.red));
-			} else {
-				throw err;
-			}
-		}
-		process.exit(1);
-	}
-} else {
-	module.exports = {
-		getDependencies: getDependencies,
-		convert: convert,
-		cmd: cmd
-	};
-}
+module.exports = {
+	getDependencies: getDependencies,
+	convert: convert,
+	cmd: cmd
+};
