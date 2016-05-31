@@ -1,6 +1,6 @@
 {
   "name": "cjs2amd",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Simple CommonJS to AMD converter and bundler",
   "keywords": [
     "cjs",
@@ -12,13 +12,21 @@
   "bin": {
     "cjs2amd": "bin/cjs2amd"
   },
-  "repository": "git://github.com/wlodzislav/cjs2amd.git",
-  "author": "Vladislav Kaminsky <wlodzislav@ya.ru>",
   "license": "MIT",
   "dependencies": {
     "ansicolors": "^0.3.2",
     "commander": "^2.9.0",
     "mkdirp": "^0.5.1",
-    "resolve-module": "^0.2.0"
-  }
+    "resolve-module": "^0.2.0",
+    "unixify": "0.2.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unlight/cjs2amd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unlight/cjs2amd/issues"
+  },
+  "homepage": "https://github.com/unlight/cjs2amd#readme"
 }

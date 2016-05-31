@@ -3,6 +3,7 @@ var path = require("path");
 var resolve = require("resolve-module");
 var mkdirp = require("mkdirp");
 var ansicolors = require("ansicolors");
+var unixify = require("unixify");
 
 function unique(array) {
 	return array.filter(function (value, index, array) {
@@ -59,36 +60,39 @@ function getDependencies(options) {
 		} catch (err) {
 			throw "Error: Can't resolve module \"" + m + "\" from \"" + options.input + '"';
 		}
-		return path.relative(options.root, resolvedModule)
+		var result = path.relative(options.root, resolvedModule);
+		result = unixify(result);
+		return result;
 	});
-
+	
 	var requireModuleNames = resolvedModulePaths.map(function (r) {
 		return r
 			.replace(/\.js$/, "") // remove .js extention
 			.replace(/^(\..\/)+/, ""); // remove ../ before node_modules
 	});
+	
 
-	var moduleNames = requireModuleNames.map(function (r) {
+	var moduleNames = requireModuleNames.reduce(function (acc, r) {
 		// decide name for module variable, from short to long ones
 		var shortNameWithPostfix = pathToLowerCamelCase(path.basename(r)) + "Module";
-
-		if (inputData.indexOf(shortNameWithPostfix) == -1) {
-			return shortNameWithPostfix;
+		if (acc.indexOf(shortNameWithPostfix) === -1 && inputData.indexOf(shortNameWithPostfix) === -1) {
+			acc.push(shortNameWithPostfix);
+			return acc;
 		}
-
 		var fullName = pathToLowerCamelCase(r);
-
-		if (inputData.indexOf(fullName) == -1) {
-			return fullName;
+		if (acc.indexOf(fullName) === -1 && inputData.indexOf(fullName) === -1) {
+			acc.push(fullName);
+			return acc;
 		}
-
-		while (true) {
-			var fullNameWithPostfix = fullName + Math.round(Math.random() * 1000);
-			if (inputData.indexOf(fullNameWithPostfix) == -1) {
-				return fullNameWithPostfix;
+		var count = 1;
+		while (++count) {
+			var fullNameWithPostfix = fullName + count;
+			if (acc.indexOf(fullNameWithPostfix) === -1 && inputData.indexOf(fullNameWithPostfix) === -1) {
+				acc.push(fullNameWithPostfix);
+				return acc;
 			}
 		}
-	});
+	}, []);
 
 	return modulePaths.map(function (originalPath, index) {
 		return {
@@ -102,9 +106,10 @@ function getDependencies(options) {
 
 function inputPathToRequireName(input, root) {
 	var resolvedInputPath = path.relative(root, input);
-	return resolvedInputPath
+	var result = resolvedInputPath
 		.replace(/\.js$/, "")
 		.replace(/^(\..\/)+/, "");
+	return unixify(result);
 }
 
 function convert(options) {
@@ -146,16 +151,30 @@ function convert(options) {
 		+ "});";
 
 	if (options.recursive) {
-		var res = {};
+		var res = options._deps || {};
 		res[requireInputName] = converted;
 		dependencies.forEach(function (d) {
+			if (res[d.requireName]) {
+				return;
+			}
 			var dependencyRes = convert({
 				input: path.join(options.root, d.resolvedPath),
 				root: options.root,
-				recursive: true
+				recursive: true,
+				_deps: res,
+				_recursiveReally: true
 			});
 			res = merge(res, dependencyRes);
 		});
+		if (options._recursiveReally === undefined) {
+			if (options.bundle) {
+				if (options.noDefineSelf) {
+					var key = Object.keys(res)[0];
+					res[key] = "";
+				}
+				res = createBundle(res, options);
+			}
+		}
 		return res;
 	} else {
 		return converted;
@@ -276,22 +295,7 @@ function cmd(options) {
 
 	if (options.recursive) {
 		if (options.bundle) {
-			try {
-				var shimPath = path.resolve(__dirname, "require-shim.js");
-				var shim = fs.readFileSync(shimPath, "utf8");
-			} catch (err) {
-				throw "Error: Can't read reqire shim for bundle \"" + shimPath + "\". " + (err.code || "");
-			}
-
-			var requireInputName = inputPathToRequireName(options.input, options.root);
-			var bundle = shim + "\n";
-			for (var requireName in res) {
-				if (requireName != requireInputName) {
-					bundle += res[requireName] + "\n";
-				}
-			}
-			bundle += res[requireInputName];
-
+			var bundle = createBundle(res, options);
 			if (options.output) {
 				try {
 					var dir = path.dirname(options.output);
@@ -351,6 +355,27 @@ function cmd(options) {
 			console.log(res);
 		}
 	}
+}
+
+function createBundle(res, options) {
+	var bundle = "";
+	if (!options.noRequireShim) {
+		try {
+			var shimPath = path.resolve(__dirname, "require-shim.js");
+			var shim = fs.readFileSync(shimPath, "utf8");
+		} catch (err) {
+			throw "Error: Can't read reqire shim for bundle \"" + shimPath + "\". " + (err.code || "");
+		}
+		bundle = shim + "\n";
+	}
+	var requireInputName = inputPathToRequireName(options.input, options.root);
+	for (var requireName in res) {
+		if (requireName != requireInputName) {
+			bundle += res[requireName] + "\n";
+		}
+	}
+	bundle += res[requireInputName];
+	return bundle;
 }
 
 module.exports = {
