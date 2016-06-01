@@ -113,6 +113,18 @@ function inputPathToRequireName(input, root) {
 	return unixify(result);
 }
 
+function cutNodeModule(inputName, options) {
+	var cwd = path.join(options.root, inputName);
+	var p = readPkgUp.sync({cwd: cwd});
+	var name = p.pkg.name;
+	var main = p.pkg.main;
+	var lib = unixify(path.join(name, main));
+	if (inputName === lib || (inputName + ".js") === lib) {
+		inputName = name;
+	}
+	return inputName;
+}
+
 function convert(options) {
 	var inputData = options.inputData;
 	if (!inputData) {
@@ -128,7 +140,7 @@ function convert(options) {
 	if (options.cutNodePath) {
 		var realPath = null;
 		try {
-			realPath = require.resolve(requireInputName);	
+			realPath = require.resolve(requireInputName);
 		} catch (e) {
 		}
 		if (realPath) {
@@ -145,10 +157,18 @@ function convert(options) {
 	var dependencies = getDependencies({
 		inputData: inputData,
 		input: options.input,
+		cutNodePath: options.cutNodePath,
 		root: options.root
 	});
 
-	var modulesListInDefine = "[" + dependencies.map(function (d) { return '"' + d.requireName + '"'; }).join(", ") + "]";
+	var modulesListInDefine = "[" + dependencies
+		.map(function(d) {
+			if (options.cutNodePath) {
+				return cutNodeModule(d.requireName, {root: options.root});
+			}
+			return d.requireName;
+		})
+		.map(function (name) { return '"' + name + '"'; }).join(", ") + "]";
 
 	var modulesListInFunction = dependencies.map(function (d) { return d.jsName; }).join(", ");
 
@@ -162,7 +182,7 @@ function convert(options) {
 	var converted = (options.require ? "require(" : 'define("' + (options.name || requireInputName) + '", ')
 		+ (dependencies.length ? modulesListInDefine  : "[]") + ", "
 		+ "function (" + (dependencies.length ? modulesListInFunction : "") + ") {\n"
-		+ "var module = { exports: {} };\n\n"
+		+ "var exports = {}, module = { exports: exports };\n\n"
 		+ body + "\n"
 		+ ((options.global && options.name) ? 'window["' + options.name + '"] = module.exports;\n' : "")
 		+ "return module.exports;\n"

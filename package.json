@@ -1,6 +1,6 @@
 {
   "name": "cjs2amd",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Simple CommonJS to AMD converter and bundler",
   "keywords": [
     "cjs",
