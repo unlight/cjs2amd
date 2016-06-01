@@ -1,26 +1,44 @@
-(function () {
-	var modules = {};
+(function(global) {
 
+	var modules = {};
 	var initialized = {};
-	window.define = function (name, dependencies, factory) {
+
+	global.define = define;
+	global.require = require;
+
+	define("require", [], function() {
+		return require;
+	});
+
+	function define(name, dependencies, factory) {
 		modules[name] = {
+			name: name,
 			dependencies: dependencies,
 			factory: factory
 		};
-	};
+	}
 
-	window.require = function (dependencyNames, factory) {
+	function require(dependencyNames, factory) {
 		var dependencies = [];
 		for (var i = 0; i < dependencyNames.length; i++) {
 			var name = dependencyNames[i];
-			if (!initialized[name]) {
+			if (name === "exports") {
+				dependencies.push({});
+				continue;
+			} else if (!initialized[name]) {
 				var module = modules[name];
-				require(module.dependencies, function () {
-					initialized[name] = module.factory.apply(null, arguments);
+				var exportsIndex = module.dependencies.indexOf("exports");
+				require(module.dependencies, function() {
+					var result = module.factory.apply(null, arguments);
+					if (exportsIndex !== -1) {
+						result = arguments[exportsIndex];
+					}
+					initialized[name] = result;
 				});
 			}
 			dependencies.push(initialized[name]);
 		}
 		return factory.apply(null, dependencies);
-	};
-})();
+	}
+
+})(window);
