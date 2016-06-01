@@ -4,6 +4,7 @@ var resolve = require("resolve-module");
 var mkdirp = require("mkdirp");
 var ansicolors = require("ansicolors");
 var unixify = require("unixify");
+var readPkgUp = require('read-pkg-up');
 
 function unique(array) {
 	return array.filter(function (value, index, array) {
@@ -123,7 +124,24 @@ function convert(options) {
 	}
 
 	var requireInputName = inputPathToRequireName(options.input, options.root);
-	
+
+	if (options.cutNodePath) {
+		var realPath = null;
+		try {
+			realPath = require.resolve(requireInputName);	
+		} catch (e) {
+		}
+		if (realPath) {
+			var p = readPkgUp.sync({cwd: realPath});
+			var name = p.pkg.name;
+			var main = p.pkg.main;
+			var lib = unixify(path.join(name, main));
+			if (requireInputName === lib || (requireInputName + ".js") === lib) {
+				requireInputName = name;
+			}
+		}
+	}
+
 	var dependencies = getDependencies({
 		inputData: inputData,
 		input: options.input,
@@ -162,6 +180,7 @@ function convert(options) {
 				root: options.root,
 				recursive: true,
 				_deps: res,
+				cutNodePath: options.cutNodePath,
 				_recursiveReally: true
 			});
 			res = merge(res, dependencyRes);
@@ -290,7 +309,8 @@ function cmd(options) {
 		root: options.root,
 		require: options.require || options.bundle,
 		recursive: options.recursive,
-		global: options.global
+		global: options.global,
+		cutNodePath: options.cutNodePath
 	});
 
 	if (options.recursive) {
