@@ -1,5 +1,7 @@
 # cjs2amd - Simple CommonJS to AMD converter and bundler
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/unlight/cjs2amd.svg)](https://greenkeeper.io/)
+
 Converts CommonJS modules:
 
 ```js
